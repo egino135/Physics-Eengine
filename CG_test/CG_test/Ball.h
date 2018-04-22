@@ -4,6 +4,7 @@
 #include <GL\glu.h>
 #include <GL\gl.h>
 #include <glm/glm.hpp>
+#include <vector>
 
 #include "BVolume.h"
 #include "Shader.h"
@@ -11,12 +12,26 @@
 #define MAX_BALL_NUM 100
 #define BALL_DRAG 0.047
 
+class Ball;
+
 class GeneralBall
 {
 public:
 	GeneralBall(const char* texturePath);
 	const GLuint VAO;
 	GLint getTextureID();
+	void generateBall(
+		glm::vec3 initialPostion, glm::vec3 v0 = glm::vec3(0.01),
+		glm::vec3 color = glm::vec3(0.5),
+		float mass = 1.0, float radius = 0.2);
+	void generateBall();
+	void move(float time);
+	void unMove();
+	void addGravity(glm::vec3 gravityA);
+	void render(Shader shader);
+	void renderAABB(Shader shader, GLuint cubeVAO);
+	void initialize();
+	std::vector<Ball> ballVector;
 private:
 	GLint textureID;
 };
@@ -59,18 +74,21 @@ public:
 	glm::mat3 getInverseInertia_motion();
 
 	glm::vec3 getAngularV0_motion();
+	
+	void addTorque_motion(glm::vec3 torqutorque_motione);
+	glm::vec3 getTorque_motion();
 
-
+	glm::vec3 getRotateDirect();
+	
 	void setAngularAlpha_motion(glm::vec3 angularAlpha_motion);
 
-	void colliding();
-	bool isCollision();
+	//void colliding();
+	//bool isCollision();
 	void initialize();
 
 	void rotatePositon(glm::vec3 rotateDegree);	//calculate rotate matrix, and set new position
 	
 private:
-	bool collision;
 	bool stillness;
 	float radius;
 	glm::vec3 geoCenter;	//define in body space, convert to motion space
@@ -79,6 +97,7 @@ private:
 	glm::mat4 modelMatrix;
 	void setPosition(glm::vec3 Avector);
 	void setForce(glm::vec3 force);
+	void setTorque_motion(glm::vec3 newTorque_motion);
 	
 
 	//define some newton varible
@@ -99,7 +118,7 @@ private:
 	glm::vec3 v0_motion;
 	glm::vec3 angularV0_motion;		//Angular velocity
 	glm::vec3 angularAlpha_motion;	//Angular acceleration
-	//glm::vec3 torque_motion;		//moment of force
+	glm::vec3 torque_motion;		//moment of force
 	
 	glm::vec3 world2body;		//world space to body space have some rotate	
 	glm::vec3 bodyd2motion;		//body space to motion space have some rotate

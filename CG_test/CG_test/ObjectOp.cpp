@@ -26,6 +26,11 @@ glm::vec3 calculateTorque(Ball b1, Ball b2)
 
 	return torque;	//return b2 torque(define in motion space)
 }
+float absVector(glm::vec3 vector)
+{
+	float x = glm::dot(vector, vector);
+	return sqrt(x);
+}
 /**/
 void ballCollideFloor(Ball& ball, float FloorNumber, float friction)
 {
@@ -37,11 +42,27 @@ void ballCollideFloor(Ball& ball, float FloorNumber, float friction)
 	{
 		reflectV = v * glm::vec3(1.0, 1.0, -1.0);
 	}
-	else if(FloorNumber < 4)
+	else if (FloorNumber < 4)
 	{
 		reflectV = v * glm::vec3(1.0, -1.0, 1.0);
+		if (FloorNumber == 2)
+		{
+			glm::vec3 r(0.0, -ball.getRadius(), 0.0);
+			glm::vec3 rotateDirect = ball.getRotateDirect();
+			glm::vec3 torque = glm::inverse(ball.getWorld2Motion()) * glm::vec4(ball.getTorque_motion(), 0.0);	//getTorque_motion usually return resistance torque
+			//t = r cross F
+			//F = t cross r, 這邊只有方向對，值不對
+			//|t| = |r| * |F|
+			//|F| = |t| / |r|
+			if (absVector(torque) > 0.00001f)
+			{
+				glm::vec3 force = glm::normalize(glm::cross(rotateDirect, r)) * (absVector(torque) / ball.getRadius());
+				glm::vec3 frictionForce = force * -1.0f;
+				ball.addForce(frictionForce);
+			}
+		}
 	}
-	else if(FloorNumber < 6)
+	else if (FloorNumber < 6)
 	{
 		reflectV = v * glm::vec3(-1.0, 1.0, 1.0);
 	}
@@ -94,5 +115,23 @@ void ballCollideBall_rotate(Ball& b1, Ball& b2)
 
 	b2angularAlpha_motion = glm::radians(b2angularAlpha_motion);
 	b2.setAngularAlpha_motion(b2angularAlpha_motion);
-	
+
+}
+void ballCollideBall_rotate2(Ball& b1, Ball& b2)
+{
+	glm::vec3 b1b2 = glm::normalize(b2.getCenter() - b1.getCenter());
+
+	glm::vec3 b1R = (b1b2 * -1.0f) * b1.getRadius();
+	glm::vec3 b1F = b1.getForce() - glm::proj(b1.getForce(), b1b2);
+	//torque = r cross F
+	glm::vec3 b1Torque = glm::cross(b1R, b1F);
+	glm::vec3 b1Torque_motion = b1.getWorld2Motion() * glm::vec4(b1Torque, 0.0);	//convert to b1 motion space
+	b1.addTorque_motion(b1Torque_motion);
+
+	glm::vec3 b2R = b1b2 * b2.getRadius();
+	glm::vec3 b2F = b2.getForce() - glm::proj(b2.getForce(), b1b2);
+	//torque = r cross F
+	glm::vec3 b2Torque = glm::cross(b2R, b2F);
+	glm::vec3 b2Torque_motion = b2.getWorld2Motion() * glm::vec4(b2Torque, 0.0);	//convert to b1 motion space
+	b2.addTorque_motion(b2Torque_motion);
 }

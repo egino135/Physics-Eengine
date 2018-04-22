@@ -147,8 +147,8 @@ int testCollisionDetect(Ball& ball, Cube cube[6])
 	{
 		if (ball.collisionTest(cube[i]))
 		{
-			ball.colliding();
-			cube[i].colliding();
+			/*ball.colliding();
+			cube[i].colliding();*/
 			//printf("#%d Cube colliding!\n", cube[i].serialNumber);
 			return cube[i].serialNumber;
 		}
@@ -159,29 +159,12 @@ bool testCollisionBall(Ball& b1, Ball& b2)
 {
 	if (b1.collisionTest(b2))
 	{
-		b1.colliding();
-		b2.colliding();
+		//b1.colliding();
+		//b2.colliding();
 		return true;
 	}
 	else
 		return false;
-}
-void testMoveBall(Ball& ball, Cube cube[6], glm::vec3 moveVector)
-{
-	ball.movePosition(moveVector);
-	//collision test
-	for (int i = 0; i < 6; i++)
-	{
-		if (ball.collisionTest(cube[i]))
-		{
-			//ball.colliding();
-			//cube[i].colliding();
-			printf("#%d Cube colliding!\n", cube[i].serialNumber);
-			ball.movePosition(moveVector *glm::vec3(-1.0, -1.0, -1.0));	//rollback initial position
-			break;
-		}
-	}
-	
 }
 void Give_force(Ball& ball, float force)
 {
@@ -267,16 +250,19 @@ int main()
 	// Game loop
 	while (!glfwWindowShouldClose(window))
 	{
+		// Check and call events
+		glfwPollEvents();
+		Do_Movement();
+
 		// Set frame time
 		GLfloat currentFrame = gameTime;
-		gameTime += timePerOnce;
+		if (keys[GLFW_KEY_KP_0])
+		testBall.addTorque_motion(glm::vec3(0.0, 0.0, 1.0));
+			gameTime += timePerOnce;
 		//GLfloat currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-		// Check and call events
-		glfwPollEvents();
-		Do_Movement();
 
 		// Clear the colorbuffer
 		glClearColor(0.75f, 0.75f, 0.75f, 1.0f);
@@ -323,14 +309,14 @@ int main()
 			//testBall.unMove();
 			//myBall.unMove();
 			ballCollideBall(testBall, myBall, consumeRate);
-			ballCollideBall_rotate(testBall, myBall);
+			ballCollideBall_rotate2(testBall, myBall);
 		}
 		//testBall.rotatePositon(glm::vec3(1.0, 0.0, 0.0));
 
 		testBall.move(deltaTime);
 		myBall.move(deltaTime);
 		
-		printf("%f, %f, %f\n", testBall.getCenter().x, testBall.getCenter().y, testBall.getCenter().z);
+		//printf("%f, %f, %f\n", testBall.getCenter().x, testBall.getCenter().y, testBall.getCenter().z);
 
 		//render
 		testBall.render(shader, generalBall);

@@ -1,17 +1,26 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/random.hpp>
 
 #include "Ball.h"
 #include "vertexOp.h"
 
+/*local*/
+float getRandom(float min, float max)
+{
+	srand(time(NULL));
 
+	double randomNumber = (double)rand() / (RAND_MAX + 1.0);
+	randomNumber *= (max - min);
+	randomNumber += min;
+
+	return randomNumber;
+}
 
 Ball::Ball(glm::vec3 initialPostion, glm::vec3 v0, glm::vec3 color, float mass, float radius)
-:BSphere(radius, initialPostion+radius),
-serialNumber(Ball::ballNum++)
+	:BSphere(radius, initialPostion + radius),
+	serialNumber(Ball::ballNum++)
 {
 	if (radius < 0.15)
 		radius = 0.15;
@@ -31,10 +40,8 @@ serialNumber(Ball::ballNum++)
 
 	this->mass = mass;
 
-	this->collision = false;
-
 	this->displace = glm::vec3(0.0);
-	
+
 	this->force = glm::vec3(0.0);	//resultant force
 
 	this->color = color;
@@ -66,7 +73,7 @@ void Ball::render(Shader shader, GeneralBall gBall)
 	this->modelMatrix *= getWorld2Motion();
 	this->modelMatrix = glm::scale(this->modelMatrix, glm::vec3(this->radius, this->radius, this->radius));
 	glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(this->modelMatrix));
-	glDrawElements(GL_TRIANGLES,getBallIndexSize(), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, getBallIndexSize(), GL_UNSIGNED_INT, 0);
 
 	glBindVertexArray(0);
 
@@ -84,8 +91,6 @@ void Ball::setPosition(glm::vec3 newPosition)
 }
 void Ball::movePosition(glm::vec3 moveVector)
 {
-	//if (isCollision())
-	//	return;
 	glm::vec4 newPosition = glm::vec4(getCenter(), 1.0) + glm::vec4(moveVector, 0.0);	//move center
 	//center convert to left bottom cornor, mean motion space convert to body space
 	newPosition = glm::inverse(getBody2Motion()) * newPosition;
@@ -97,10 +102,17 @@ void Ball::move(float time)	//time is delta t
 {
 	//rotation move
 
+	//calculate alpha
+	this->angularAlpha_motion = getInverseInertia_motion()*
+		(this->torque_motion - glm::cross(getAngularV0_motion(), getInertia_motion() * getAngularV0_motion()));
+	this->angularAlpha_motion = glm::degrees(angularAlpha_motion);
+
+	//calculate drag force(mass is same, calculate accelerate)
+	this->angularAlpha_motion -= this->angularV0_motion * this->dragCoefficient;
+
 	//omega = omega + alpha * t
 	this->angularV0_motion = this->angularV0_motion + this->angularAlpha_motion * time;
-	//calculate drag force(mass is same, calculate accelerate)
-	this->angularAlpha_motion -= this->angularAlpha_motion * glm::abs(this->angularV0_motion) * this->dragCoefficient;
+	
 	//degree = omega * t
 	glm::vec3 rotateDegree = this->angularV0_motion * time;	//of course, define in motion space
 
@@ -110,10 +122,10 @@ void Ball::move(float time)	//time is delta t
 	//F = ma, a = F/m
 	glm::vec3 a = this->force / this->mass;
 	//calculate drag force(mass is same, calculate accelerate)
-	a -= a * glm::abs(this->v0) * this->dragCoefficient;
+	a -= this->v0 * this->dragCoefficient;
 	//S = v0*t + 1/2*a*t*t
 	glm::vec3 S;
-	S = this->v0 * time + a*time*time*0.5f;
+	S = this->v0 * time + a * time*time*0.5f;
 	this->displace = S;
 
 	//v = v0 + a*t;
@@ -174,27 +186,19 @@ void Ball::setForce(glm::vec3 force)
 {
 	this->force = force;
 }
-void Ball::colliding()
-{
-	this->collision = true;
-}
-bool Ball::isCollision()
-{
-	return this->collision;
-}
 void Ball::initialize()
 {
-	this->collision = false;
 	this->force = glm::vec3(0.0);
+	this->torque_motion = glm::vec3(0.0);
 }
 glm::mat4 Ball::getWorld2Motion()
 {
 	glm::mat4 w2m = glm::mat4();
 	
-	/*w2m = glm::translate(w2m, this->geoCenter);	//body to motion
-	w2m *= this->rotationMatrix;
-	w2m = glm::translate(w2m, this->position);	//world to body
-	*/
+	//w2m = glm::translate(w2m, this->geoCenter);	//body to motion
+	//w2m *= this->rotationMatrix;
+	//w2m = glm::translate(w2m, this->position);	//world to body
+	
 	w2m *= getBody2Motion();
 	w2m *= getWorld2Body();
 
@@ -260,7 +264,7 @@ void Ball::rotatePositon(glm::vec3 rotateDegree)
 									//newPositionMatrix = inverse(R)*inverse(T)
 	//newPositionMatrix = glm::inverse(this->rotationMatrix);
 	//newPositionMatrix = glm::translate(newPositionMatrix, this->geoCenter * -1.0f);
-	
+
 	newPositionMatrix = glm::inverse(getBody2Motion());
 
 	setPosition(newPositionMatrix * nowCenter);
@@ -284,13 +288,87 @@ glm::mat4 Ball::getBody2Motion()
 
 	return b2m;
 }
+void Ball::addTorque_motion(glm::vec3 torque_motion)
+{
+	setTorque_motion(this->torque_motion + torque_motion);
+}
+glm::vec3 Ball::getTorque_motion()
+{
+	//return this->torque_motion;
+	return this->inertia_motion * this->angularAlpha_motion;
+}
+void Ball::setTorque_motion(glm::vec3 newTorque_motion)
+{
+	this->torque_motion = newTorque_motion;
+}
+glm::vec3 Ball::getRotateDirect()
+{
+	return glm::normalize(this->inertia_motion * this->angularV0_motion);
+}
 
 GeneralBall::GeneralBall(const char* texturePath)
-:VAO(generateBallVAO())
+	:VAO(generateBallVAO())
 {
 	this->textureID = loadTexture(texturePath);
 }
 GLint GeneralBall::getTextureID()
 {
 	return this->textureID;
+}
+void GeneralBall::generateBall(glm::vec3 initialPostion, glm::vec3 v0,	glm::vec3 color, float mass, float radius)
+{
+	Ball ball(initialPostion, v0, color, mass, radius);
+	ballVector.push_back(ball);
+}
+void GeneralBall::generateBall()
+{
+	glm::vec3 pos(getRandom(0.0, 5.0), getRandom(0.0, 5.0), getRandom(0.0, 5.0));
+	glm::vec3 v0(getRandom(-10.0, 10.0), getRandom(-10.0, 10.0), getRandom(-10.0, 10.0));
+	glm::vec3 color(0.5);
+	float m = getRandom(0.0, 5.0);
+	float r = getRandom(0.15, 0.225);
+
+	generateBall(pos, v0, color, m, r);
+}
+void GeneralBall::move(float time)
+{
+	for (int i = 0; i < this->ballVector.size(); i++)
+	{
+		ballVector[i].move(time);
+	}
+}
+void GeneralBall::unMove()
+{
+	for (int i = 0; i < this->ballVector.size(); i++)
+	{
+		ballVector[i].unMove();
+	}
+}
+void GeneralBall::addGravity(glm::vec3 gravityA)
+{
+	for (int i = 0; i < this->ballVector.size(); i++)
+	{
+		ballVector[i].addAcceleration(gravityA);
+	}
+}
+void GeneralBall::render(Shader shader)
+{
+	for (int i = 0; i < this->ballVector.size(); i++)
+	{
+		ballVector[i].render(shader, *this);
+	}
+}
+void GeneralBall::renderAABB(Shader shader, GLuint cubeVAO)
+{
+	for (int i = 0; i < this->ballVector.size(); i++)
+	{
+		ballVector[i].renderAABB(shader, cubeVAO);
+	}
+}
+void GeneralBall::initialize()
+{
+	for (int i = 0; i < this->ballVector.size(); i++)
+	{
+		ballVector[i].initialize();
+	}
 }
