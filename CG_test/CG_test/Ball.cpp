@@ -9,7 +9,6 @@
 /*local*/
 float getRandom(float min, float max)
 {
-	srand(time(NULL));
 
 	double randomNumber = (double)rand() / (RAND_MAX + 1.0);
 	randomNumber *= (max - min);
@@ -322,7 +321,8 @@ void GeneralBall::generateBall(glm::vec3 initialPostion, glm::vec3 v0,	glm::vec3
 }
 void GeneralBall::generateBall()
 {
-	glm::vec3 pos(getRandom(0.0, 5.0), getRandom(0.0, 5.0), getRandom(0.0, 5.0));
+
+	glm::vec3 pos(getRandom(2.0, 8.0), getRandom(2.0, 8.0), getRandom(2.0, 8.0));
 	glm::vec3 v0(getRandom(-10.0, 10.0), getRandom(-10.0, 10.0), getRandom(-10.0, 10.0));
 	glm::vec3 color(0.5);
 	float m = getRandom(0.0, 5.0);

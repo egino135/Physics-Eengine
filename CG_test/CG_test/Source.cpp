@@ -242,9 +242,16 @@ int main()
 	};
 	GeneralCube generalCube;
 
-	Ball testBall(glm::vec3(2.0, 2.0, 2.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.5, 0.2, 0.2));	//position is left-botton cornor
-	Ball myBall(glm::vec3(2.3, 4.0, 2.0), glm::vec3(0.0, 0.0, 0.0));
+	//Ball testBall(glm::vec3(2.0, 2.0, 2.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.5, 0.2, 0.2));	//position is left-botton cornor
+	//Ball myBall(glm::vec3(2.3, 4.0, 2.0), glm::vec3(0.0, 0.0, 0.0));
 	GeneralBall generalBall("img/floor.jpg");
+	generalBall.generateBall(glm::vec3(2.0, 2.0, 2.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.5, 0.2, 0.2));
+	generalBall.generateBall(glm::vec3(2.3, 4.0, 2.0), glm::vec3(0.0, 0.0, 0.0));
+
+	for (int i = 0; i < 18; i++)
+		generalBall.generateBall();
+
+	Ball& testBall = generalBall.ballVector[0];
 
 	//////////////////////////////////////////////////
 	// Game loop
@@ -279,50 +286,46 @@ int main()
 		lampShader.setShader(projection, view, camera.Position, camera.Front);
 
 		//get some force or accelration
-		testBall.addAcceleration(glm::vec3(0.0, -GRAVITY, 0.0));
-		myBall.addAcceleration(glm::vec3(0.0, -GRAVITY, 0.0));
+		generalBall.addGravity((glm::vec3(0.0, -GRAVITY, 0.0)));
 		Give_force(testBall, 15.0);
 
-		//move
-		int collisionCubeNumber = testCollisionDetect(testBall, floorCube);
-		if (collisionCubeNumber == -1)	//have not generate collision by floor and ball
-		{
-			//
-		}
-		else
-		{
-			testBall.unMove();
-			ballCollideFloor(testBall, collisionCubeNumber, consumeRate);
-		}
-		collisionCubeNumber = testCollisionDetect(myBall, floorCube);
-		if (collisionCubeNumber == -1)	//have not generate collision by floor and ball
-		{
-			//
-		}
-		else
-		{
-			myBall.unMove();
-			ballCollideFloor(myBall, collisionCubeNumber, consumeRate);
-		}
-		if (testCollisionBall(testBall, myBall))
-		{
-			//testBall.unMove();
-			//myBall.unMove();
-			ballCollideBall(testBall, myBall, consumeRate);
-			ballCollideBall_rotate2(testBall, myBall);
-		}
-		//testBall.rotatePositon(glm::vec3(1.0, 0.0, 0.0));
 
-		testBall.move(deltaTime);
-		myBall.move(deltaTime);
+		for (int i = 0; i < generalBall.ballVector.size(); i++)
+		{
+			Ball& ball = generalBall.ballVector[i];
+			int collisionCubeNumber = testCollisionDetect(ball, floorCube);
+			if (collisionCubeNumber == -1)
+			{
+				//
+			}
+			else
+			{
+				ball.unMove();
+				ballCollideFloor(ball, collisionCubeNumber, consumeRate);
+			}
+		}
+		for (int i = 0; i < generalBall.ballVector.size() - 1 ; i++)
+		{
+			Ball& b1 = generalBall.ballVector[i];
+			for (int j = i + 1; j < generalBall.ballVector.size(); j++)
+			{
+				Ball& b2 = generalBall.ballVector[j];
+				if (testCollisionBall(b1, b2))
+				{
+					b1.unMove();
+					b2.unMove();
+					ballCollideBall(b1, b2, consumeRate);
+					ballCollideBall_rotate2(b1, b2);
+				}
+			}
+		}
+		generalBall.move(deltaTime);
 		
 		//printf("%f, %f, %f\n", testBall.getCenter().x, testBall.getCenter().y, testBall.getCenter().z);
 
 		//render
-		testBall.render(shader, generalBall);
-		testBall.renderAABB(shader, generalCube.VAO);
-		myBall.render(shader, generalBall);
-		myBall.renderAABB(shader, generalCube.VAO);
+		generalBall.render(shader);
+		generalBall.renderAABB(shader, generalCube.VAO);
 		renderFloorCube(shader, generalCube.VAO, floorCube);
 		renderLight(lampShader, generalCube.VAO, light);
 
@@ -335,8 +338,8 @@ int main()
 		{
 			floorCube[i].initialize();
 		}
-		testBall.initialize();
-		myBall.initialize();
+
+		generalBall.initialize();
 
 		// Swap the buffers
 		glfwSwapBuffers(window);
