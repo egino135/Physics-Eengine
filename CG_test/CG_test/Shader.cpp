@@ -7,7 +7,7 @@
 
 // Point light positions
 glm::vec3 pointLightPositions[] = {
-	glm::vec3(2.3f, 5.6f, -3.0f),
+	glm::vec3(5.0f, 5.0f, 5.0f),
 	glm::vec3(-1.7f, 0.9f, 1.0f)
 };
 glm::vec3 spotLight[] =

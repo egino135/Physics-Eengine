@@ -5,6 +5,7 @@
 #include <memory>
 
 #define GRAVITY	9.80665 //m/s*s
+#define FlOOR_WIDTH 0.2f
 
 // GLEW
 #define GLEW_STATIC
@@ -18,6 +19,7 @@
 #include "Camera.h"
 #include "vertexOp.h"
 #include "ObjectOp.h"
+#include "RegularGrid.h"
 
 
 // GLM Mathemtics
@@ -51,7 +53,7 @@ GLfloat lastFrame = 0.0f;
 int pressNumber = 0;
 bool PhongEnable = true;
 
-float consumeRate = 0.95;
+float friction = 0.95;
 
 long double gameTime = 0.0;
 float timePerOnce = 0.0015;
@@ -166,6 +168,149 @@ bool testCollisionBall(Ball& b1, Ball& b2)
 	else
 		return false;
 }
+void gridFloorCollision(RegularGrid& regularGrid,GeneralBall& generalBall, Cube floorCube[6], 
+	int x, int y, int z)
+{
+	if (x == 0)
+	{
+		int cubeNumber = 4;
+		int i = x;
+			for (int j = 0; j < regularGrid.getClipNum(); j++)
+				for (int k = 0; k < regularGrid.getClipNum(); k++)
+					for (int n = 0; n < (int)regularGrid.grids[i][j][k].ballNumbers.size(); n++)
+					{
+						Ball& ball = generalBall.ballVector[regularGrid.grids[i][j][k].ballNumbers[n]];
+						if (ball.collisionTest(floorCube[cubeNumber]))
+						{
+							ball.unMove();
+							//double check
+							if (ball.collisionTest(floorCube[cubeNumber]))	//still collision
+							{
+								ball.unMove();
+								ball.unMove();
+								ball.unMove();
+							}
+							ballCollideFloor(ball, cubeNumber, friction);
+						}
+					}
+	}
+	else if (x == regularGrid.getClipNum() - 1)
+	{
+		int cubeNumber = 5;
+		int i = x;
+		for (int j = 0; j < regularGrid.getClipNum(); j++)
+			for (int k = 0; k < regularGrid.getClipNum(); k++)
+				for (int n = 0; n < (int)regularGrid.grids[i][j][k].ballNumbers.size(); n++)
+				{
+					Ball& ball = generalBall.ballVector[regularGrid.grids[i][j][k].ballNumbers[n]];
+					if (ball.collisionTest(floorCube[cubeNumber]))
+					{
+						ball.unMove();
+						//double check
+						if (ball.collisionTest(floorCube[cubeNumber]))	//still collision
+						{
+							ball.unMove();
+							ball.unMove();
+							ball.unMove();
+						}
+						ballCollideFloor(ball, cubeNumber, friction);
+					}
+				}
+	}
+	else if (y == 0)
+	{
+		int cubeNumber = 2;
+		int j = y;
+		for (int i = 0; i < regularGrid.getClipNum(); i++)
+			for (int k = 0; k < regularGrid.getClipNum(); k++)
+				for (int n = 0; n < (int)regularGrid.grids[i][j][k].ballNumbers.size(); n++)
+				{
+					Ball& ball = generalBall.ballVector[regularGrid.grids[i][j][k].ballNumbers[n]];
+					if (ball.collisionTest(floorCube[cubeNumber]))
+					{
+						ball.unMove();
+						//double check
+						if (ball.collisionTest(floorCube[cubeNumber]))	//still collision
+						{
+							ball.unMove();
+							ball.unMove();
+							ball.unMove();
+						}
+						ballCollideFloor(ball, cubeNumber, friction);
+					}
+				}
+	}
+	else if(y == regularGrid.getClipNum() - 1)
+	{
+		int cubeNumber = 3;
+		int j = y;
+		for (int i = 0; i < regularGrid.getClipNum(); i++)
+			for (int k = 0; k < regularGrid.getClipNum(); k++)
+				for (int n = 0; n < (int)regularGrid.grids[i][j][k].ballNumbers.size(); n++)
+				{
+					Ball& ball = generalBall.ballVector[regularGrid.grids[i][j][k].ballNumbers[n]];
+					if (ball.collisionTest(floorCube[cubeNumber]))
+					{
+						ball.unMove();
+						//double check
+						if (ball.collisionTest(floorCube[cubeNumber]))	//still collision
+						{
+							ball.unMove();
+							ball.unMove();
+							ball.unMove();
+						}
+						ballCollideFloor(ball, cubeNumber, friction);
+					}
+				}
+	}
+	else if (z == 0)
+	{
+		int cubeNumber = 0;
+		int k = z;
+		for (int i = 0; i < regularGrid.getClipNum(); i++)
+			for (int j = 0; j < regularGrid.getClipNum(); j++)
+				for (int n = 0; n < (int)regularGrid.grids[i][j][k].ballNumbers.size(); n++)
+				{
+					Ball& ball = generalBall.ballVector[regularGrid.grids[i][j][k].ballNumbers[n]];
+					if (ball.collisionTest(floorCube[cubeNumber]))
+					{
+						ball.unMove();
+						//double check
+						if (ball.collisionTest(floorCube[cubeNumber]))	//still collision
+						{
+							ball.unMove();
+							ball.unMove();
+							ball.unMove();
+						}
+						ballCollideFloor(ball, cubeNumber, friction);
+					}
+				}
+	}
+	else if (z == regularGrid.getClipNum() - 1)
+	{
+		int cubeNumber = 1;
+		int k = z;
+		for (int i = 0; i < regularGrid.getClipNum(); i++)
+			for (int j = 0; j < regularGrid.getClipNum(); j++)
+				for (int n = 0; n < (int)regularGrid.grids[i][j][k].ballNumbers.size(); n++)
+				{
+					Ball& ball = generalBall.ballVector[regularGrid.grids[i][j][k].ballNumbers[n]];
+					if (ball.collisionTest(floorCube[cubeNumber]))
+					{
+						ball.unMove();
+						//double check
+						if (ball.collisionTest(floorCube[cubeNumber]))	//still collision
+						{
+							ball.unMove();
+							ball.unMove();
+							ball.unMove();
+						}
+						ballCollideFloor(ball, cubeNumber, friction);
+					}
+				}
+	}
+	
+}
 void Give_force(Ball& ball, float force)
 {
 	if (keys[GLFW_KEY_UP])
@@ -228,12 +373,12 @@ int main()
 	//it can rebound any object
 	Cube floorCube[6] =
 	{
-		{ glm::vec3(0.0, 0.0, 0.0),		glm::vec3(0.01, 0.01, 0.01),	1000000.0, 10.0f, 10.0f, 0.1f },
-		{ glm::vec3(0.0, 0.0, 10.0),	glm::vec3(0.01, 0.01, 0.01),	1000000.0, 10.0f, 10.0f, 0.1f },
-		{ glm::vec3(0.0, 0.0, 0.0),		glm::vec3(0.01, 0.01, 0.01),	1000000.0, 10.0f, 0.1f, 10.0f },
-		{ glm::vec3(0.0, 10.0, 0.0),	glm::vec3(0.01, 0.01, 0.01),	1000000.0, 10.0f, 0.1f, 10.0f },
-		{ glm::vec3(0.0, 0.0, 0.0),		glm::vec3(0.01, 0.01, 0.01),	1000000.0, 0.1f, 10.0f, 10.0f },
-		{ glm::vec3(10.0, 0.0, 0.0),	glm::vec3(0.01, 0.01, 0.01),	1000000.0, 0.1f, 10.0f, 10.0f }
+		{ glm::vec3(0.0, 0.0, 0.0),		glm::vec3(0.01, 0.01, 0.01),	1000000.0, 10.0f, 10.0f, FlOOR_WIDTH },
+		{ glm::vec3(0.0, 0.0, 10.0),	glm::vec3(0.01, 0.01, 0.01),	1000000.0, 10.0f, 10.0f, FlOOR_WIDTH },
+		{ glm::vec3(0.0, 0.0, 0.0),		glm::vec3(0.01, 0.01, 0.01),	1000000.0, 10.0f, FlOOR_WIDTH, 10.0f },
+		{ glm::vec3(0.0, 10.0, 0.0),	glm::vec3(0.01, 0.01, 0.01),	1000000.0, 10.0f, FlOOR_WIDTH, 10.0f },
+		{ glm::vec3(0.0, 0.0, 0.0),		glm::vec3(0.01, 0.01, 0.01),	1000000.0, FlOOR_WIDTH, 10.0f, 10.0f },
+		{ glm::vec3(10.0, 0.0, 0.0),	glm::vec3(0.01, 0.01, 0.01),	1000000.0, FlOOR_WIDTH, 10.0f, 10.0f }
 	};
 	Cube light[2] =
 	{
@@ -244,7 +389,7 @@ int main()
 
 	//Ball testBall(glm::vec3(2.0, 2.0, 2.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.5, 0.2, 0.2));	//position is left-botton cornor
 	//Ball myBall(glm::vec3(2.3, 4.0, 2.0), glm::vec3(0.0, 0.0, 0.0));
-	GeneralBall generalBall("img/floor.jpg");
+	GeneralBall generalBall("img/white.png");
 	generalBall.generateBall(glm::vec3(2.0, 2.0, 2.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.5, 0.2, 0.2));
 	generalBall.generateBall(glm::vec3(2.3, 4.0, 2.0), glm::vec3(0.0, 0.0, 0.0));
 
@@ -253,22 +398,59 @@ int main()
 
 	Ball& testBall = generalBall.ballVector[0];
 
+	RegularGrid regularGrid(10.0, 10);
+
+	
+
+	int nbFrames = 0;
+	double lastTime = glfwGetTime();
 	//////////////////////////////////////////////////
 	// Game loop
 	while (!glfwWindowShouldClose(window))
 	{
+		
+
 		// Check and call events
 		glfwPollEvents();
 		Do_Movement();
 
 		// Set frame time
 		GLfloat currentFrame = gameTime;
-		if (keys[GLFW_KEY_KP_0])
-		testBall.addTorque_motion(glm::vec3(0.0, 0.0, 1.0));
-			gameTime += timePerOnce;
+
+		// Measure speed
+		double currentTime = glfwGetTime();
+		nbFrames++;
+		if (currentTime - lastTime >= 1.0)
+		{	// If last prinf() was more than 1 sec ago
+			// printf and reset timer
+			system("cls");
+			double time = currentTime - lastTime;
+			printf("%f ms/frame\n", time * 1000 / double(nbFrames));
+			printf("FPS: %d\n", (int)(nbFrames / time));
+			printf("now ball number:%d\n", generalBall.ballVector.size());
+			nbFrames = 0;
+			lastTime += 1.0;
+		}
+		//if (keys[GLFW_KEY_KP_1])
+		gameTime += timePerOnce;
 		//GLfloat currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
+
+
+		if (keys[GLFW_KEY_KP_0])
+		testBall.addTorque_motion(glm::vec3(0.0, 0.0, 1.0));
+
+		if (keys[GLFW_KEY_SPACE])
+		{
+			generalBall.generateBall(camera.Position - glm::vec3(0.2), camera.Front * 100.0f, glm::vec3(0.1, 0.5, 0.1));
+			keys[GLFW_KEY_SPACE] = false;
+		}
+			
+		for (int i = 0; i < generalBall.ballVector.size(); i++)
+		{
+			regularGrid.registerInGrids(i, generalBall.ballVector[i]);
+		}
 
 
 		// Clear the colorbuffer
@@ -290,35 +472,35 @@ int main()
 		Give_force(testBall, 15.0);
 
 
-		for (int i = 0; i < generalBall.ballVector.size(); i++)
-		{
-			Ball& ball = generalBall.ballVector[i];
-			int collisionCubeNumber = testCollisionDetect(ball, floorCube);
-			if (collisionCubeNumber == -1)
-			{
-				//
-			}
-			else
-			{
-				ball.unMove();
-				ballCollideFloor(ball, collisionCubeNumber, consumeRate);
-			}
-		}
-		for (int i = 0; i < generalBall.ballVector.size() - 1 ; i++)
-		{
-			Ball& b1 = generalBall.ballVector[i];
-			for (int j = i + 1; j < generalBall.ballVector.size(); j++)
-			{
-				Ball& b2 = generalBall.ballVector[j];
-				if (testCollisionBall(b1, b2))
-				{
-					b1.unMove();
-					b2.unMove();
-					ballCollideBall(b1, b2, consumeRate);
-					ballCollideBall_rotate2(b1, b2);
-				}
-			}
-		}
+
+
+		gridFloorCollision(regularGrid, generalBall, floorCube, 0, -1, -1);
+		gridFloorCollision(regularGrid, generalBall, floorCube, regularGrid.getClipNum() - 1, -1, -1);
+		gridFloorCollision(regularGrid, generalBall, floorCube, -1, 0, -1);
+		gridFloorCollision(regularGrid, generalBall, floorCube, -1, regularGrid.getClipNum() - 1, -1);
+		gridFloorCollision(regularGrid, generalBall, floorCube, -1, -1, 0);
+		gridFloorCollision(regularGrid, generalBall, floorCube, -1, -1, regularGrid.getClipNum() - 1);
+		
+
+		//use grid
+		for (int i = 0; i < regularGrid.getClipNum(); i++)
+			for (int j = 0; j < regularGrid.getClipNum(); j++)
+				for (int k = 0; k < regularGrid.getClipNum(); k++)
+					for (int n = 0; n < (int)regularGrid.grids[i][j][k].ballNumbers.size()-1; n++)
+					{
+						for (int m = n + 1; m < regularGrid.grids[i][j][k].ballNumbers.size(); m++)
+						{
+							Ball& b1 = generalBall.ballVector[regularGrid.grids[i][j][k].ballNumbers[n]];
+							Ball& b2 = generalBall.ballVector[regularGrid.grids[i][j][k].ballNumbers[m]];
+							if (testCollisionBall(b1, b2))
+							{
+								b1.unMove();
+								b2.unMove();
+								ballCollideBall(b1, b2, friction);
+								ballCollideBall_rotate2(b1, b2);
+							}
+						}
+					}
 		generalBall.move(deltaTime);
 		
 		//printf("%f, %f, %f\n", testBall.getCenter().x, testBall.getCenter().y, testBall.getCenter().z);
@@ -327,7 +509,7 @@ int main()
 		generalBall.render(shader);
 		generalBall.renderAABB(shader, generalCube.VAO);
 		renderFloorCube(shader, generalCube.VAO, floorCube);
-		renderLight(lampShader, generalCube.VAO, light);
+		//renderLight(lampShader, generalCube.VAO, light);
 
 		//no use class object to render
 		//drawTestObject(shader, cubeVAO);
@@ -340,6 +522,7 @@ int main()
 		}
 
 		generalBall.initialize();
+		regularGrid.initialize();
 
 		// Swap the buffers
 		glfwSwapBuffers(window);
